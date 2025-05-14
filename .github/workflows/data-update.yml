@@ -1,37 +1,49 @@
-name: Daily Data Update
-
-permissions:
-  contents: write    # 워크플로에서 커밋 & 푸시 권한
+# .github/workflows/daily-data-update.yml
+name: Multiple Daily Data Updates
 
 on:
   schedule:
-    - cron: '0 21 * * *'    # 매일 KST 06:00 (UTC 21:00)
-  workflow_dispatch:       # 수동 실행 버튼 활성화
+    # 매일 KST 06:00 → UTC 21:00 전날
+    - cron: '0 21 * * *'
+    # 매일 KST 09:00 → UTC 00:00
+    - cron: '0 0 * * *'
+    # 매일 KST 12:00 → UTC 03:00
+    - cron: '0 3 * * *'
+    # 매일 KST 15:00 → UTC 06:00
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 코드 체크아웃
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          persist-credentials: true   # GITHUB_TOKEN을 그대로 사용
+          persist-credentials: true
 
-      - name: Python 세팅
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
-      - name: 의존성 설치
-        run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: 데이터 업데이트 실행
+      - name: Run data update
         run: python update_data.py
 
-      - name: 변경 커밋 & 푸시
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main        # 기본 브랜치 이름
-          force: true
+      - name: Commit and push updated data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add latest_data.pkl
+          git commit -m "chore: Automated data update" || echo "No changes to commit"
+          git push
