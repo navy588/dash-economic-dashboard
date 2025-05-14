@@ -1,49 +1,50 @@
-# .github/workflows/daily-data-update.yml
 name: Multiple Daily Data Updates
+
+permissions:
+  contents: write    # 커밋 & 푸시 권한
 
 on:
   schedule:
-    # 매일 KST 06:00 → UTC 21:00 전날
-    - cron: '0 21 * * *'
-    # 매일 KST 09:00 → UTC 00:00
-    - cron: '0 0 * * *'
-    # 매일 KST 12:00 → UTC 03:00
-    - cron: '0 3 * * *'
-    # 매일 KST 15:00 → UTC 06:00
-    - cron: '0 6 * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    - cron: '0 21 * * *'   # KST 06:00 (UTC 21:00)
+    - cron: '0 0  * * *'   # KST 09:00 (UTC 00:00)
+    - cron: '0 3  * * *'   # KST 12:00 (UTC 03:00)
+    - cron: '0 6  * * *'   # KST 15:00 (UTC 06:00)
+  workflow_dispatch:     # 수동 실행 버튼
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
         with:
           persist-credentials: true
 
-      - name: Set up Python 3.11
+      - name: Python 세팅
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
 
-      - name: Run data update
+      - name: 데이터 업데이트 실행
         run: python update_data.py
 
-      - name: Commit and push updated data
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 변경된 pickle 스테이징 & 커밋
         run: |
+          # Git 사용자 설정 (액션에서 커밋할 때 필요)
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # 생성된 latest_data.pkl만 스테이징
           git add latest_data.pkl
-          git commit -m "chore: Automated data update" || echo "No changes to commit"
-          git push
+          # 변경사항이 있으면 커밋, 없으면 무시
+          git commit -m "chore: update latest_data.pkl" || echo "🚀 no changes to commit"
+
+      - name: 변경 푸시
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
+          force: true
