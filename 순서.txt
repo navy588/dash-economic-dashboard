@@ -1,0 +1,24 @@
+1 GDP(전기비)
+2.GDP(전기비) 전망       "/gdp":       layout_gdp,
+3 GDP(전년비)
+4. FOMC 전망 
+5. 인플레이션 
+6. 금리
+7. 노동시장
+8. 환율 완료
+9. 주가(기업)
+10. 주가(국가)
+11. 원자재
+12. 주택시장 
+
+        "/now":       layout_now,
+        "/fomc":      layout_fomc,
+        "/inflation": layout_inflation,
+        "/commodity": layout_commodity,
+        "/interest":  layout_interest,
+        "/labor":     layout_labor,
+        "/house":     layout_house,
+        "/cycle":     layout_cycle,
+        "/fx":        layout_fx,
+        "/stock":     layout_stock
+    }.get(path, layout_gdp)()
